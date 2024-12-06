@@ -16,10 +16,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Read first:
  *
- * https://projectreactor.io/docs/core/release/reference/#which.peeking
+ * https://projectreactor.io/docs/core/release/reference/apdx-operatorChoice.html#which.peeking
  *
  * Useful documentation:
  *
+ * https://projectreactor.io/docs/core/release/api/
  * https://projectreactor.io/docs/core/release/reference/#which-operator
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
@@ -37,8 +38,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doOnSubscribe(c -> hooksTriggered.add("subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5))
                     .expectNextCount(5)
@@ -56,8 +56,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doFirst(() -> hooksTriggered.add("before subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5).doOnSubscribe(s -> hooksTriggered.add("subscribe")))
                     .expectNextCount(5)
@@ -75,8 +74,10 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger counter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doOnNext(i -> {
+					System.out.println(i);
+					counter.getAndIncrement();
+				});
 
         StepVerifier.create(temperatureFlux)
                     .expectNextCount(20)
@@ -94,8 +95,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean completed = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doOnComplete(() -> completed.set(true));
 
         StepVerifier.create(temperatureFlux.skip(20))
                     .expectNextCount(0)
@@ -113,8 +113,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean canceled = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doOnCancel(() -> canceled.set(true));
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -133,8 +132,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doOnTerminate(hooksTriggeredCounter::getAndIncrement);
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -161,8 +159,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+				.doFinally(signalType -> hooksTriggeredCounter.getAndIncrement());
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -192,8 +189,10 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
                                  .doFirst(() -> sideEffects.add("two"))
                                  .doFirst(() -> sideEffects.add("one"));
 
+		// Note that when several doFirst(Runnable) operators are used anywhere in a chain of operators, their order of execution is reversed
+		// compared to the declaration order (as subscribe signal flows backward, from the ultimate subscriber to the source publisher):
         List<String> orderOfExecution =
-                Arrays.asList("todo", "todo", "todo"); //todo: change this line only
+                Arrays.asList("one", "two", "three");
 
         StepVerifier.create(just)
                     .expectNext(true)
@@ -217,8 +216,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> signals = new CopyOnWriteArrayList<>();
 
         Flux<Integer> flux = Flux.just(1, 2, 3)
-                //todo: change this line only
-                ;
+				.doOnEach(signal -> signals.add(signal.getType().name()));
 
         StepVerifier.create(flux)
                     .expectNextCount(3)
