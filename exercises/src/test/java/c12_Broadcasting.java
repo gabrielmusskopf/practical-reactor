@@ -32,8 +32,10 @@ public class c12_Broadcasting extends BroadcastingBase {
     @Test
     public void sharing_is_caring() throws InterruptedException {
         Flux<Message> messages = messageStream()
-                //todo: do your changes here
-                ;
+				// .replay().autoConnect()
+				// .share()
+				//.cache()
+				.publish().refCount(2);
 
         //don't change code below
         Flux<String> userStream = messages.map(m -> m.user);
@@ -56,12 +58,13 @@ public class c12_Broadcasting extends BroadcastingBase {
      * Since two subscribers are interested in the updates, which are coming from same source, convert `updates` stream
      * to from cold to hot source.
      * Answer: What is the difference between hot and cold publisher? Why does won't .share() work in this case?
+	 *
+	 * share() não funciona pois quando o próximo assintate subscrever ao flux, o fluxo reinicia
      */
     @Test
     public void hot_vs_cold() {
         Flux<String> updates = systemUpdates()
-                //todo: do your changes here
-                ;
+				.publish().autoConnect();
 
         //subscriber 1
         StepVerifier.create(updates.take(3).doOnNext(n -> System.out.println("subscriber 1 got: " + n)))
@@ -82,8 +85,7 @@ public class c12_Broadcasting extends BroadcastingBase {
     @Test
     public void history_lesson() {
         Flux<String> updates = systemUpdates()
-                //todo: do your changes here
-                ;
+				.cache();
 
         //subscriber 1
         StepVerifier.create(updates.take(3).doOnNext(n -> System.out.println("subscriber 1 got: " + n)))
